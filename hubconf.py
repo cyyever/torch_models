@@ -11,6 +11,6 @@ try:
 except BaseException:
     pass
 try:
-    from graph.gcn import ThreeGCN, OneGCN
+    from graph.gcn import ThreeGCN, OneGCN,TwoGCN
 except BaseException:
     pass
