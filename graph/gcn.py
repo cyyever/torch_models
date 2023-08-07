@@ -26,8 +26,8 @@ class OneGCN(torch.nn.Module):
     def __init__(self, num_features, num_classes):
         super().__init__()
         self.conv1 = GCNConv(num_features, 1024)
-        self.fc1 = GCNConv(1024, 512)
-        self.fc2 = GCNConv(512, 128)
+        self.fc1 = Linear(1024, 512)
+        self.fc2 = Linear(512, 128)
         self.classifier = Linear(128, num_classes)
 
     def forward(self, x, edge_index):
