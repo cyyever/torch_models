@@ -11,7 +11,7 @@ class ThreeGCN(torch.nn.Module):
         self.conv3 = GCNConv(512, 128)
         self.classifier = Linear(128, num_classes)
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, **kwargs):
         h = self.conv1(x, edge_index)
         h = h.relu()
         h = self.conv2(h, edge_index)
@@ -25,17 +25,14 @@ class ThreeGCN(torch.nn.Module):
 class TwoGCN(torch.nn.Module):
     def __init__(self, num_features, num_classes):
         super().__init__()
-        self.conv1 = GCNConv(num_features, 1024)
-        self.conv2 = GCNConv(1024, 512)
-        self.fc1 = Linear(512, 128)
+        self.conv1 = GCNConv(num_features, 256)
+        self.conv2 = GCNConv(256, 128)
         self.classifier = Linear(128, num_classes)
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, **kwargs):
         h = self.conv1(x, edge_index)
         h = h.relu()
         h = self.conv2(h, edge_index)
-        h = h.relu()
-        h = self.fc1(h)
         h = h.relu()
         # Apply a final (linear) classifier.
         return self.classifier(h)
@@ -49,7 +46,7 @@ class OneGCN(torch.nn.Module):
         self.fc2 = Linear(512, 128)
         self.classifier = Linear(128, num_classes)
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, **kwargs):
         h = self.conv1(x, edge_index)
         h = h.relu()
         h = self.fc1(h)
