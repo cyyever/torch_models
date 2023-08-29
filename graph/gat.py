@@ -3,7 +3,7 @@ from torch.nn import Linear
 from torch_geometric.nn import GATv2Conv
 
 
-class ThreeGCN(torch.nn.Module):
+class ThreeGATCN(torch.nn.Module):
     def __init__(self, num_features, num_classes):
         super().__init__()
         self.conv1 = GATv2Conv(num_features, 1024)
@@ -22,7 +22,7 @@ class ThreeGCN(torch.nn.Module):
         return self.classifier(h)
 
 
-class TwoGCN(torch.nn.Module):
+class TwoGATCN(torch.nn.Module):
     def __init__(self, num_features, num_classes):
         super().__init__()
         self.conv1 = GATv2Conv(num_features, 256)
@@ -38,7 +38,7 @@ class TwoGCN(torch.nn.Module):
         return self.classifier(h)
 
 
-class OneGCN(torch.nn.Module):
+class OneGATCN(torch.nn.Module):
     def __init__(self, num_features, num_classes):
         super().__init__()
         self.conv1 = GATv2Conv(num_features, 1024)
