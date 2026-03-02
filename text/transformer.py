@@ -16,17 +16,17 @@ class PositionalEncoding(Module):
         div_term = torch.exp(
             torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model)
         )
-        pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term)
-        pe[:, 0, 1::2] = torch.cos(position * div_term)
+        pe = torch.zeros(1, max_len, d_model)
+        pe[0, :, 0::2] = torch.sin(position * div_term)
+        pe[0, :, 1::2] = torch.cos(position * div_term)
         self.register_buffer("pe", pe)
 
     def forward(self, x: Tensor) -> Tensor:
         """
         Args:
-            x: Tensor, shape [max_len, batch_size, embedding_dim]
+            x: Tensor, shape [batch_size, max_len, embedding_dim]
         """
-        x = x + self.pe[: x.size(0)]
+        x = x + self.pe[:, : x.size(1)]
         return self.dropout(x)
 
 
@@ -43,13 +43,14 @@ class TransformerLangModel(Module):
         self.max_len = max_len
         self.embedding = Embedding(token_num, embedding_dim=d_model)
         self.positional_encoding = PositionalEncoding(d_model=d_model, max_len=max_len)
-        encoder_layers = TransformerEncoderLayer(d_model=d_model, nhead=nhead)
+        encoder_layers = TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True)
         self.transformer_encoder = TransformerEncoder(encoder_layers, num_layers=6)
         self.linear = Linear(d_model, token_num)
         self.activation = LogSoftmax()
 
     def forward(self, src: Tensor) -> Tensor:
-        src_embedding = self.positional_encoding(self.embedding(src))
+        # src: [seq_len, batch] -> transpose embedding to [batch, seq_len, d_model]
+        src_embedding = self.positional_encoding(self.embedding(src).transpose(0, 1))
         output = self.transformer_encoder(
             src=src_embedding,
         )
@@ -72,7 +73,7 @@ class TransformerClassificationModel(Module):
         self.token_num = token_num
         self.embedding = Embedding(token_num, embedding_dim=d_model)
         self.positional_encoding = PositionalEncoding(d_model=d_model, max_len=max_len)
-        encoder_layers = TransformerEncoderLayer(d_model=d_model, nhead=nhead)
+        encoder_layers = TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True)
         self.transformer_encoder = TransformerEncoder(
             encoder_layers, num_layers=num_encoder_layer
         )
@@ -82,13 +83,15 @@ class TransformerClassificationModel(Module):
             self.linear = Linear(d_model, num_classes)
 
     def get_input_feature(self, inputs):
-        return self.embedding(inputs)
+        # inputs: [seq_len, batch] -> embedding: [seq_len, batch, d_model]
+        # transpose to [batch, seq_len, d_model] for batch_first transformer
+        return self.embedding(inputs).transpose(0, 1)
 
     def forward_input_feature(self, embeddings):
         output = self.transformer_encoder(
             src=self.positional_encoding(embeddings),
         )
-        output = output.mean(dim=0)
+        output = output.mean(dim=1)
         output = self.linear(output)
         return output
 
